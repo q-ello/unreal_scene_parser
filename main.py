@@ -80,5 +80,5 @@ for mesh in meshes:
     
     mesh.transform.location = (mx - tx, my - ty, mz - tz)
     
-blender_export.make_scene(meshes, arguments[0].split('/')[-1].split('.')[0], target_location)
+blender_export.make_scene(meshes, scene_file.replace('\\', '/').split('/')[-1].split('.')[0], target_location)
 #endregion
