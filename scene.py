@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 class Transform:
     location: tuple = (0, 0, 0)
     rotation: tuple = (0, 0, 0)
+    scale: tuple = (1, 1, 1)
     
 @dataclass
 class FileInstance:

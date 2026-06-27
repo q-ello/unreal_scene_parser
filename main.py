@@ -1,36 +1,74 @@
-import os
-
 import blender_export
 import parser
 import sys
 
 from scene import FileInstance
 
+#region config
+EXPORTS_PATH = "assets/Exports/Hibiki/Content/"
+MODELS_PATH = "assets/Hibiki/Content/"
+WORLD_SCALE = 0.01  
+VERBOSE = True
+#endregion
+
+#region helpers
 def strip_file_path(file_path):
     file_path_without_game = ('/').join(file_path.split('/')[2:])
     file_path_without_number = file_path_without_game.split('.')[0]
     return file_path_without_number
+#endregion
 
-exports_path = "assets/Exports/Hibiki/Content/"
-models_path = "assets/Hibiki/Content/"
-
-WORLD_SCALE = 0.01  
-
+#region arguments
 arguments = sys.argv[1:]
 
-blueprints = parser.load_scene(arguments[0], arguments[1], int(arguments[2]) if arguments[2] else 1000)
+if (len(arguments) == 0):
+    print("You need to specify local path to the scene file in the first argument")
+    sys.exit()
+scene_file = arguments[0]
+
+if (len(arguments) == 1):
+    print("You need to specify part of target name that you're aware of in the second argument")
+    sys.exit()
     
-meshes: list[FileInstance] = []
+target_name = arguments[1]
+nearby_distance = int(arguments[2]) if len(arguments) > 2 and arguments[2] else 500
+#endregion
+
+#region main_block
+blueprints = parser.load_scene(scene_file, target_name, nearby_distance, VERBOSE)
+
+meshes = []
 
 for bp in blueprints:
-    mesh = parser.find_mesh_path(exports_path + strip_file_path(bp.file_path) + '.json')
-    if mesh.file_path == '':
-        continue
+    bp_path = strip_file_path(bp.file_path)
+    if "Blueprints" in bp.file_path:
+        # Pattern B: need to look up mesh inside the BP file
+        mesh = parser.find_mesh_path(EXPORTS_PATH + bp_path + ".json")
+        if not mesh.file_path:
+            continue
+        
+        bx, by, bz = bp.transform.location
+        mx, my, mz = mesh.transform.location
+        mesh.transform.location = (bx + mx, by + my, bz + mz)
+        mesh.transform.rotation  = bp.transform.rotation
+        mesh.transform.scale     = tuple(a * b for a, b in zip(bp.transform.scale, mesh.transform.scale))
     
-    mesh.transform.location = (bp.transform.location[0] + mesh.transform.location[0] * WORLD_SCALE, bp.transform.location[1] + mesh.transform.location[1] * WORLD_SCALE, bp.transform.location[2] + mesh.transform.location[2] * WORLD_SCALE)
-    mesh.transform.rotation = bp.transform.rotation
-    mesh.file_path = models_path + strip_file_path(mesh.file_path) + '.glb'
+    else:
+        mesh.transform.location = bp.transform.location
+        mesh.transform.rotation = bp.transform.rotation
+        mesh.transform.scale    = bp.transform.scale
+
+    
+    mx, my, mz = mesh.transform.location
+    s = WORLD_SCALE
+    
+    mesh.transform.location = (mx * s, my * s, mz * s)
+    mesh.file_path = MODELS_PATH + strip_file_path(mesh.file_path) + '.glb'
     meshes.append(mesh)
-    print(bp, mesh)
     
-blender_export.make_scene(meshes, arguments[0].split('/')[-1].split('.')[0])
+
+target_mesh = meshes[-1] if meshes else None
+target_location = target_mesh.transform.location if target_mesh else None
+
+blender_export.make_scene(meshes, arguments[0].split('/')[-1].split('.')[0], target_location)
+#endregion
