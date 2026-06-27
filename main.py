@@ -37,9 +37,13 @@ nearby_distance = int(arguments[2]) if len(arguments) > 2 and arguments[2] else 
 #region main_block
 blueprints = parser.load_scene(scene_file, target_name, nearby_distance, VERBOSE)
 
-meshes = []
+meshes: list[FileInstance] = []
 
 for bp in blueprints:
+    if not bp.file_path:
+        continue
+    
+    mesh = bp
     bp_path = strip_file_path(bp.file_path)
     if "Blueprints" in bp.file_path:
         # Pattern B: need to look up mesh inside the BP file
@@ -65,10 +69,16 @@ for bp in blueprints:
     mesh.transform.location = (mx * s, my * s, mz * s)
     mesh.file_path = MODELS_PATH + strip_file_path(mesh.file_path) + '.glb'
     meshes.append(mesh)
-    
 
 target_mesh = meshes[-1] if meshes else None
 target_location = target_mesh.transform.location if target_mesh else None
 
+#move so that target is in focus right away
+for mesh in meshes:
+    mx, my, mz = mesh.transform.location
+    tx, ty, tz = target_location
+    
+    mesh.transform.location = (mx - tx, my - ty, mz - tz)
+    
 blender_export.make_scene(meshes, arguments[0].split('/')[-1].split('.')[0], target_location)
 #endregion
