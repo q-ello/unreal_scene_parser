@@ -95,3 +95,4 @@ blender_export.make_scene(meshes, scene_file.replace('\\', '/').split('/')[-1].s
 #TODO find the code name of the object through dependencies (for example seb is np0150 and drone is np0020)
 #TODO make it so that you do not need FModel
 #TODO make it so that you only say the name of the object and all levels are made automatically
+#TODO find overrided with damage things
