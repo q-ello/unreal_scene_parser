@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 
 from scene import *
 
@@ -141,6 +142,10 @@ def load_scene(filename: str, target: str, nearby_distance: float, verbose: bool
             target_instance = inst
         if inst.file_path:
             actor_file_paths[outer_name] = inst.file_path
+        
+    if not target_instance.file_path:
+        print("There is no", target, "in a scene", filename)
+        sys.exit()
     
     target_loc = target_instance.transform.location
     
