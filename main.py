@@ -53,8 +53,11 @@ for bp in blueprints:
         
         bx, by, bz = bp.transform.location
         mx, my, mz = mesh.transform.location
+        
+        brx, bry, brz = bp.transform.rotation
+        mrx, mry, mrz = mesh.transform.rotation
         mesh.transform.location = (bx + mx, by + my, bz + mz)
-        mesh.transform.rotation  = bp.transform.rotation
+        mesh.transform.rotation  = (brx + mrx, bry + mry, brz + mrz)
         mesh.transform.scale     = tuple(a * b for a, b in zip(bp.transform.scale, mesh.transform.scale))
     
     else:
@@ -69,9 +72,13 @@ for bp in blueprints:
     mesh.transform.location = (mx * s, my * s, mz * s)
     mesh.file_path = MODELS_PATH + strip_file_path(mesh.file_path) + '.glb'
     meshes.append(mesh)
+    
+if not meshes:
+    print("No meshes were found")
+    sys.exit()
 
-target_mesh = meshes[-1] if meshes else None
-target_location = target_mesh.transform.location if target_mesh else None
+target_mesh = meshes[-1]
+target_location = target_mesh.transform.location
 
 #move so that target is in focus right away
 for mesh in meshes:
@@ -82,3 +89,9 @@ for mesh in meshes:
     
 blender_export.make_scene(meshes, scene_file.replace('\\', '/').split('/')[-1].split('.')[0], target_location)
 #endregion
+
+#TODO make a whole scene, not just a streaming part
+#TODO make rotation
+#TODO find the code name of the object through dependencies (for example seb is np0150 and drone is np0020)
+#TODO make it so that you do not need FModel
+#TODO make it so that you only say the name of the object and all levels are made automatically

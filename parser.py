@@ -7,7 +7,7 @@ from scene import *
 #region config
 #probably you need to tweak this for other UE games or map formats
 #the order of components where relative location can live
-LOCATION_COMPONENT_PRIORITY = ["SceneComponent", "CapsuleComponent", "BoxComponent"]
+LOCATION_COMPONENT_PRIORITY = ["SceneComponent", "CapsuleComponent", "BoxComponent", "HbkSkeletalMeshComponent", "SkeletalMeshComponent", "StaticMeshComponent"]
 #maps component type names
 MESH_COMPONENT_TYPES = {
     "SkeletalMeshComponent": "SkeletalMesh",
@@ -76,7 +76,7 @@ def resolve_mesh(actor_obj: dict, comps: list[dict]) -> str:
     
     #bp file
     for comp in comps:
-        comp_type = comp.get("Type")
+        comp_type = comp.get("Type", "")
         matched_key = next((prop for type_key, prop in MESH_COMPONENT_TYPES.items() if type_key in comp_type), None)
         
         if matched_key is None:
@@ -142,6 +142,7 @@ def load_scene(filename: str, target: str, nearby_distance: float, verbose: bool
             target_instance = inst
         if inst.file_path:
             actor_file_paths[outer_name] = inst.file_path
+            print(outer_name)
         
     if not target_instance.file_path:
         print("There is no", target, "in a scene", filename)
@@ -197,9 +198,10 @@ def find_mesh_path(blueprint_local_path: str) -> FileInstance:
             continue
         
         location = location_to_tuple(props["RelativeLocation"]) if "RelativeLocation" in props else (0, 0, 0)
+        rotation = rotation_to_tuple(props["RelativeRotation"]) if "RelativeRotation" in props else (0, 0, 0)
         scale = scale_to_tuple(props.get("RelativeScale3D", {}))
         
-        return FileInstance(file_path=mesh_ref.get("ObjectPath", ""), transform=Transform(location, scale=scale))
+        return FileInstance(file_path=mesh_ref.get("ObjectPath", ""), transform=Transform(location, rotation, scale))
     
     return FileInstance()
     
